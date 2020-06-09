@@ -1,0 +1,14 @@
+{
+    "Name" : "SDW",
+    "Verison" : "0.1",
+    "Release" : "1", 
+    "Discription" : "",
+
+    "machine_name" : "rosa2019.1",
+    "os_release" : "2019.1",
+    "os_arhc" : "x86_64",
+    "logger_filelog_mode" : false,
+    "logger_logfile_path" : "logs",
+    "logger_debug_mode" : false,
+    "logger_level" : 4
+}

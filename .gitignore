@@ -1,0 +1,5 @@
+/logs
+.fuse*
+.vscode
+*.log
+modules/__pycache__

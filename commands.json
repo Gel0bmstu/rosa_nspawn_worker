@@ -1,0 +1,15 @@
+{
+    "get_current_params": "/usr/bin/sudo systemctl --machine={{machine_name_}} show",
+    "check_systemd_logs": "/usr/bin/sudo journalctl -p 3 -xb -M {{machine_name_}}",
+    "login_in_container": "/usr/bin/sudo machinectl login {{machine_name_}}",
+    "get_output_by_unit": "/usr/bin/sudo journalctl -M {{machine_name_}} -u",
+    "get_all_open_ports": "/usr/bin/sudo netstat -tulpn",
+
+    "check_machine_exist": "/usr/bin/sudo machinectl list",
+
+    "get_current_service_status": "/usr/bin/sudo systemctl status",
+
+    "get_service_error_logs_for_last_session": "/usr/bin/sudo journalctl -xb -p3 -M {{machine_name_}} -u",
+    "get_service_logs_for_last_session": "/usr/bin/sudo journalctl -xb -M {{machine_name_}} -u",
+    "execute_command_in_container_shell": "/usr/bin/sudo systemd-run --machine {{machine_name_}}"
+}
