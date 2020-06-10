@@ -42,15 +42,17 @@ class NspawnMaker:
         if len(rpm_files):
             self.log_.w('There is some rpm files:\n{}\n they will be deleted now.'.format(rpm_files))
             subprocess.check_output(['/usr/bin/sudo', '/usr/bin/rm', '-rf'] + rpm_files)
-        self.log_.d(subprocess.check_output(['/usr/bin/wget', url + repo_file.group(0)]))
+        output = subprocess.check_output(['/usr/bin/wget', url + repo_file.group(0)])
+        self.log_.d(output.decode('utf-8'))
         self.log_.l('Rosa-repos getted successfully ...')
         return repo_file.group(0)
         
     def check_machine_exist_(self, machine):
-        output = subprocess.check_output(['/usr/bin/sudo', '/usr/bin/machinectl'])
+        output = subprocess.check_output(['/usr/bin/sudo', '/usr/bin/machinectl', 'list'])
         output = output.decode('utf-8')
 
-        if output == 'No machines.':
+        if 'No machines.' in output:
+            self.log_.l("There is no running machines")
             return False
 
         machines = output.split('\n')[1:-2]
@@ -60,6 +62,11 @@ class NspawnMaker:
                 return True
         
         return False
+
+    def interrupt_machine(self, machine=self.machine_name_):
+        subprocess.check_output(['/usr/bin/sudo', '/usr/bin/machinectl', 'terminate', self.machine_name_])
+        time.sleep(3)
+        subprocess.check_output(['/usr/bin/sudo', 'systemctl', 'reset-failed'])
 
     def make_container(self):
         self.log_.l('Making nspawn container ...')
@@ -88,8 +95,7 @@ class NspawnMaker:
 
         if self.check_machine_exist_(self.machine_name_):
             self.log_.l('Machine {} exists. Interrupting its work.')
-            subprocess.check_output(['/usr/bin/sudo', '/usr/bin/machinectl', 'terminate', self.machine_name_])
-            time.sleep(3)
+            self.interrupt_machine(self.machine_name_)
 
         devnull = open('/dev/null', "w")
         p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_], stdout=devnull)
