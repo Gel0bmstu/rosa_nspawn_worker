@@ -10,6 +10,7 @@ class NspawnMaker:
     log_ = {}
     release_ = ''
     arch_ = ''
+    machine_name_ = ''
     rootfs_dir_ = '/home/oleg/rosa2019.1'
     boot_dir_ =  rootfs_dir_ + '/boot'
     cache_dir_ =  rootfs_dir_ + '/var/cache/dnf'
@@ -18,10 +19,11 @@ class NspawnMaker:
         ExecStart=-/sbin/agetty --noclear --autologin rosa --keep-baud console 115200,38400,9600 $TERM'
 
 
-    def __init__(self, logger, release='2019.1', arch='x86_64', rootfs_dir=''):
+    def __init__(self, logger, release='2019.1', arch='x86_64', machine_name='rosa2019.1', rootfs_dir=''):
         self.log_ = logger
         self.release_ = release
         self.arch_ = arch
+        self.machine_name_ = machine_name
 
         if rootfs_dir != '':
             self.rootfs_dir_ = rootfs_dir
@@ -42,6 +44,17 @@ class NspawnMaker:
         self.log_.l('Rosa-repos getted successfully ...')
         return repo_file.group(0)
         
+    def check_machine_exist_(self, machine):
+        output = subprocess.check_output(['/usr/bin/sudo', '/usr/bin/rm', '-rf', os.path.realpath('.') + '/*.rpm'])
+        output = output.decode('utf-8')
+
+        machines = s.split('\n')[1:-2]
+
+        for machine_name in machines:
+            if machine_name.split()[0] == machine:
+                return True
+        
+        return False
 
     def make_container(self):
         self.log_.l('Making nspawn container ...')
@@ -68,8 +81,11 @@ class NspawnMaker:
         f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
         f.write(self.autologin_service_)
 
+        if self.check_machine_exist_(self.machine_name_):
+            subprocess.check_output(['/usr/bin/sudo', '/usr/bin/machinectl', 'terminate', self.machine_name_])
+
         devnull = open('/dev/null', "w")
-        p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', 'rosa2019.1'], stdout=devnull)
+        p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_], stdout=devnull)
 
         time.sleep(3)
 

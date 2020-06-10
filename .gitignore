@@ -1,5 +1,7 @@
 /logs
 .fuse*
+*.rpm*
 .vscode
+test.py
 *.log
 modules/__pycache__
