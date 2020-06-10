@@ -63,7 +63,10 @@ class NspawnMaker:
         
         return False
 
-    def interrupt_machine(self, machine=self.machine_name_):
+    def interrupt_machine(self, machine):
+        if machine == None:
+            machine = self.machine_name_
+            
         subprocess.check_output(['/usr/bin/sudo', '/usr/bin/machinectl', 'terminate', self.machine_name_])
         time.sleep(3)
         subprocess.check_output(['/usr/bin/sudo', 'systemctl', 'reset-failed'])

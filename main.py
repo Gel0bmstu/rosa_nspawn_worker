@@ -77,6 +77,6 @@ if __name__ == '__main__':
     # pc.set_bridge_free_ip()
     pc.check_if_port_is_listening(22, ip = '192.168.76.201')
 
-    nm.interrupt_machine(self.machine_name_)
+    nm.interrupt_machine()
 
     subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
