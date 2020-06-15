@@ -58,8 +58,8 @@ if __name__ == '__main__':
 
     subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
     
-    nm = NspawnMaker(logger, release='2019.1', arch='x86_64')
-    nm.make_container()
+    # nm = NspawnMaker(logger, release='2019.1', arch='x86_64')
+    # nm.make_container()
 
     pc = SshChecker(logger, 'rosa')
     sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
@@ -67,16 +67,16 @@ if __name__ == '__main__':
     # Work with systemd container
     sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
     sc.check_systemd_state()
-    # sc.check_current_status_of_service('iptables')
-    # sc.check_logs_error_of_service_for_last_session('iptables')
-    print(sc.execute_command_in_container_shell('/usr/bin/sudo /usr/bin/ls -la ~/', True))
+    sc.check_current_status_of_service('dbus')
+    sc.check_logs_error_of_service_for_last_session('dbus')
+    # print(sc.execute_command_in_container_shell('/usr/bin/sudo ls -la /home/rosa/', True))
     sc.check_systemd_error_logs()
 
     # Work with container network
     pc = SshChecker(logger, 'rosa')
-    # pc.set_bridge_free_ip()
-    pc.check_if_port_is_listening(22, ip = '192.168.76.201')
+    pc.set_bridge_free_ip()
+    pc.check_if_port_is_listening(22, ip = pc.get_bridge_ip())
 
-    nm.interrupt_machine()
+    # nm.interrupt_machine()
 
     subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])

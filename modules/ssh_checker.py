@@ -18,6 +18,9 @@ class SshChecker:
         self.log_ = logger
         self.bridge_name_ = bridge_name
 
+    def get_bridge_ip(self):
+        return self.bridge_ip_
+
     def get_router_addres(self):
         try: 
             self.log_.l('Try to get router ip address ...')
@@ -30,7 +33,7 @@ class SshChecker:
             return defailt_ip[0][0]
         except Exception as e:
             self.log_.e('Unable to get router ip address:\n{}'.format(e))
-            exit()
+            exit(1)
 
     def get_local_network_addres(self):
         try:
@@ -40,17 +43,18 @@ class SshChecker:
 
             self.log_.l('Router ip address received successfully.')
 
-            return re.sub(r'\d$', '0/24', router_address)
+            return re.sub(r'\d*$', '0/24', router_address)
 
         except Exception as e:
             self.log_.e('Unable to get local subnet addres:\n{}'.format(e))
-            exit()
+            exit(1)
 
     def get_free_ip_addr_in_local_network(self):
         try:
             self.log_.l('Try to get local free ip address ...')
 
             local_subnet_address = self.get_local_network_addres()
+            print('local subnet address', local_subnet_address)
             addresses_list = ipaddress.ip_network(local_subnet_address)
 
             try:
@@ -64,14 +68,14 @@ class SshChecker:
             self.log_.e('There is no free ip addresses in local subnet.')
         except Exception as e:
             self.log_.e('Unable to get free local subnet addres:\n{}'.format(e))
-            exit()
+            exit(1)
 
     def get_current_ip_of_interface(self, interface):
         try:
             self.log_.l('Try to get ip of {} ...'.format(interface))
 
             dev = netifaces.ifaddresses(interface)
-            
+
             try:
                 ip = dev[2][0]['addr']
                 self.log_.l('Current ip of {} is: {}'.format(interface, ip))
@@ -80,7 +84,7 @@ class SshChecker:
                 self.log_.l("Interface doesn't have an ip address.")
         except Exception as e:
             self.log_.e('Unable tto get ip of {}:\n{}'.format(interface, e))
-            exit()
+            exit(1)
 
     def set_bridge_free_ip(self):
         try:
@@ -102,7 +106,7 @@ class SshChecker:
             self.log_.l('The free ip address for the bridge was set successfully.')
         except Exception as e:
             self.log_.e('Unable to set free ip to bridge:\n{}'.format(e))
-            exit()
+            exit(1)
 
     def check_if_port_is_listening(self, port = 22, ip = None):
         if ip == None and self.bridge_ip_:
