@@ -12,6 +12,7 @@ class NspawnMaker:
     arch_ = ''
     machine_name_ = ''
     rootfs_dir_ = '/home/oleg/rosa2019.1'
+    # rootfs_dir_ = '/home/oleg/uptade_nspawn_container'
     boot_dir_ =  rootfs_dir_ + '/boot'
     cache_dir_ =  rootfs_dir_ + '/var/cache/dnf'
     autologin_service_ = u'[Service] \n \
