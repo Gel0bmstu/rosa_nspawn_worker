@@ -59,7 +59,11 @@ if __name__ == '__main__':
 
     subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
     sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
-
+    nm = NspawnMaker(logger, release='2019.1', arch='x86_64', machine_name='updater')
+    
+    if nm.check_machine_exist('updater') is False:
+        nm.make_container()
+    
     # Work with systemd container
     print(sc.execute_command_in_container_shell('/usr/bin/python3 /home/omv/updates_tracker/new_checker.py --file /home/omv/updates_tracker/package_list', True))
 

@@ -58,8 +58,8 @@ if __name__ == '__main__':
 
     subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
     
-    # nm = NspawnMaker(logger, release='2019.1', arch='x86_64')
-    # nm.make_container()
+    nm = NspawnMaker(logger, release='2019.1', arch='x86_64')
+    nm.make_container()
 
     pc = SshChecker(logger, 'rosa')
     sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
