@@ -100,7 +100,7 @@ class NspawnMaker:
         f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
         f.write(self.autologin_service_)
 
-        if self.check_machine_exist(self.machine_name_):
+        # if self.check_machine_exist(self.machine_name_):
         #    self.log_.l('Machine {} exists. Interrupting its work.')
         #    self.interrupt_machine(self.machine_name_)
 
