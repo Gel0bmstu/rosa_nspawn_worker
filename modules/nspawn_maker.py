@@ -57,10 +57,12 @@ class NspawnMaker:
             self.log_.l("There is no running machines")
             return False
 
-        machines = output.split('\n')[1:-2]
+        machines = output.split('\n')
 
+        self.log_.d('Machines list:')
         for machine_name in machines:
-            if machine_name.split()[0] == machine:
+            self.log_.d('Machine name: {}'.format(machine_name))
+            if machine_name != "" and machine_name.split()[0] == machine:
                 return True
         
         return False
