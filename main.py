@@ -22,6 +22,7 @@ def parse_script_arguments():
                         help='filter output by priority ranges: 0 - no logs, 1 - errors only,\
                             2 - errors and warnings, 3 - errors, warnings and info, 4 - precursor and debug.')
     parser.add_argument('-m', '--machine', action='store', default='', dest='machine_name', help='set systemd machine name')
+    parser.add_argument('-r', '--root-dir', action='store', default='', dest='root_dir', help='set systemd container root directory')
 
     return parser.parse_args()
 

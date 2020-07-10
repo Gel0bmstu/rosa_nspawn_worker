@@ -11,5 +11,5 @@
 
     "get_service_error_logs_for_last_session": "/usr/bin/sudo journalctl -xb -p3 -M {{machine_name_}} -u",
     "get_service_logs_for_last_session": "/usr/bin/sudo journalctl -xb -M {{machine_name_}} -u",
-    "execute_command_in_container_shell": "/usr/bin/sudo systemd-run --machine {{machine_name_}}"
+    "execute_command_in_container_shell": "/usr/bin/sudo systemd-run --machine {{machine_name_}} --pipe"
 }

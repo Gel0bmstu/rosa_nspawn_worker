@@ -157,17 +157,21 @@ class SystemdChecker:
             if command[0] != '/':
                 self.log_.w('Path to executable programm in command "{}" should be absolute.'.format(command))
 
-            p = subprocess.Popen(self.commands_['execute_command_in_container_shell'] + command.split(), \
-                stdout=subprocess.PIPE, \
-                stdin=subprocess.PIPE, \
-                stderr=subprocess.PIPE)
+            # p = subprocess.Popen(self.commands_['execute_command_in_container_shell'] + command.split(), \
+            #     stdout=subprocess.PIPE, \
+            #     stdin=subprocess.PIPE, \
+            #     stderr=subprocess.PIPE)
 
-            (out, err) = p.communicate()
+            # (out, err) = p.communicate()
+
+            out = subprocess.check_output(self.commands_['execute_command_in_container_shell'] + command.split())
 
             self.log_.l('Command "{}" executed successfully.'.format(command))
             self.log_.d('Command output is: {}.'.format(out.decode('utf-8')))
             # [:-1] remove '\n' symbol at the end of the 'err' string 
-            self.log_.d('Command error is: {}.'.format(err.decode('utf-8')[:-1]))
+            # self.log_.d('Command error is: {}.'.format(err.decode('utf-8')[:-1]))
+
+            return out.decode('utf-8')
 
             if get_output:
                 # Out format should be 'Running as unit: run-u105.service'

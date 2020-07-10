@@ -23,6 +23,7 @@ def parse_script_arguments():
                         help='filter output by priority ranges: 0 - no logs, 1 - errors only,\
                             2 - errors and warnings, 3 - errors, warnings and info, 4 - precursor and debug.')
     parser.add_argument('-m', '--machine', action='store', default='', dest='machine_name', help='set systemd machine name')
+    parser.add_argument('-r', '--root-dir', action='store', default='', dest='root_dir', help='set systemd container root directory')
 
     return parser.parse_args()
 
@@ -47,7 +48,7 @@ if __name__ == '__main__':
 
     # Parsing script arguments and config file
     args = parse_script_arguments()
-    configs = parse_json_configs('{}/rosa_nspawn_worker/config.json'.format(os.getenv('WORKSPACE')))
+    configs = parse_json_configs()
 
     # Creating logger
     logger = Logger(log_debug_mode=args.logger_debug_mode, \
@@ -58,13 +59,14 @@ if __name__ == '__main__':
         configs=configs)
 
     subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
-    sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
-    nm = NspawnMaker(logger, release='2019.1', arch='x86_64', machine_name='updater')
-    
-    if nm.check_machine_exist('updater') is False:
-        nm.make_container()
+    sc = SystemdChecker(logger, configs, machine_name='updater')
+    # nm = NspawnMaker(logger=logger, release='2019.1', arch='x86_64', machine_name='updater', rootfs_dir='/home/oleg/update_nspawn_container')
+    # nm.make_container()
     
     # Work with systemd container
-    print(sc.execute_command_in_container_shell('/usr/bin/python3 /home/omv/updates_tracker/new_checker.py --file /home/omv/updates_tracker/package_list', True))
+    # print(sc.execute_command_in_container_shell('/usr/bin/git clone https://github.com/Gel0bmstu/updates_tracker /home/omv/updates_tracker', True))
+    print(sc.execute_command_in_container_shell('/usr/bin/python3 /home/omv/updates_tracker/new_checker.py --package vim', True))
+    # print(sc.execute_command_in_container_shell('/bin/echo "da"', True))
+
 
     subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])

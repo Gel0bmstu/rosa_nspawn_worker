@@ -17,7 +17,7 @@ class NspawnMaker:
     cache_dir_ =  rootfs_dir_ + '/var/cache/dnf'
     autologin_service_ = u'[Service] \n \
         ExecStart= \n \
-        ExecStart=-/sbin/agetty --noclear --autologin rosa --keep-baud console 115200,38400,9600 $TERM'
+        ExecStart=-/sbin/agetty --noclear --autologin omv --keep-baud console 115200,38400,9600 $TERM'
 
 
     def __init__(self, logger, release='2019.1', arch='x86_64', machine_name='rosa2019.1', rootfs_dir=''):
@@ -27,6 +27,7 @@ class NspawnMaker:
         self.machine_name_ = machine_name
 
         if rootfs_dir != '':
+            self.log_.l('Changing contaner root directory.')
             self.rootfs_dir_ = rootfs_dir
             self.boot_dir =  rootfs_dir + '/boot'
             self.cache_dir =  rootfs_dir + '/var/cache/dnf'
@@ -90,7 +91,7 @@ class NspawnMaker:
         # copy fstab
         subprocess.check_output(['/usr/bin/sudo', 'cp', '-fv', 'fstab.template', self.rootfs_dir_ + '/etc/fstab'])
         # perl -e 'print crypt($ARGV[0], "password")' omv
-        subprocess.check_output(['/usr/bin/sudo', 'useradd', '--prefix', self.rootfs_dir_, 'rosa', '-p', 'pabc4KTyGYBtg', '-G', 'wheel', '-m'])
+        subprocess.check_output(['/usr/bin/sudo', 'useradd', '--prefix', self.rootfs_dir_, 'omv', '-p', 'pabc4KTyGYBtg', '-G', 'wheel', '-m'])
         subprocess.check_output(['/usr/bin/sudo', '/usr/bin/mkdir', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/'])
         subprocess.check_output(['/usr/bin/sudo', '/usr/bin/touch', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
         subprocess.check_output(['/usr/bin/sudo', 'chmod', '666', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
@@ -98,8 +99,8 @@ class NspawnMaker:
         f.write(self.autologin_service_)
 
         if self.check_machine_exist(self.machine_name_):
-            self.log_.l('Machine {} exists. Interrupting its work.')
-            self.interrupt_machine(self.machine_name_)
+        #    self.log_.l('Machine {} exists. Interrupting its work.')
+        #    self.interrupt_machine(self.machine_name_)
 
         devnull = open('/dev/null', "w")
         p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_], stdout=devnull)
