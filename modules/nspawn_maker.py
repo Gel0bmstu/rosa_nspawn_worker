@@ -32,6 +32,18 @@ class NspawnMaker:
             self.boot_dir =  rootfs_dir + '/boot'
             self.cache_dir =  rootfs_dir + '/var/cache/dnf'
 
+    def create_network_bridge(self, bridge_name='rosa'):
+        self.log_.l('Creating network bridge {}'.format(bridge_name))
+        bridge_list = subprocess.check_output(['/usr/bin/sudo', 'brctl', 'show'])
+        bridges = bridge_list.decode('utf-8').split('\n')
+        for b in bridges:
+            line = b.split()
+            if bridge_name == line[0]:
+                self.log_.l('bridge {} is already exist'.format(bridge_name))
+                return
+
+        subprocess.check_output(['/usr/bin/sudo', 'brctl', 'addbr', bridge_name])
+
     def find_repos_(self, release, arch):
         self.log_.l('Getting rosa-repos ...')
         url = 'http://abf-downloads.rosalinux.ru/rosa{}/repository/{}/main/release/'.format(release, arch)
@@ -49,7 +61,10 @@ class NspawnMaker:
         self.log_.l('Rosa-repos getted successfully ...')
         return repo_file.group(0)
         
-    def check_machine_exist(self, machine):
+    def check_machine_exist(self, machine=''):
+        if machine == '':
+            machine = self.machine_name_
+
         output = subprocess.check_output(['/usr/bin/sudo', '/usr/bin/machinectl', 'list'])
         output = output.decode('utf-8')
 
@@ -63,8 +78,10 @@ class NspawnMaker:
         for machine_name in machines:
             self.log_.d('Machine name: {}'.format(machine_name))
             if machine_name != "" and machine_name.split()[0] == machine:
+                self.log_.l('Machine {} exists'.format(machine))
                 return True
         
+        self.log_.l('Machine {} does not exist'.format(machine))
         return False
 
     def interrupt_machine(self, machine=''):
@@ -78,14 +95,19 @@ class NspawnMaker:
     def make_container(self):
         self.log_.l('Making nspawn container ...')
         repo_pkg = self.find_repos_(self.release_, self.arch_)
-        pkgs = 'NetworkManager less systemd-units openssh-server vim systemd procps-ng timezone dnf sudo usbutils passwd basesystem-minimal rosa-repos-keys rosa-repos'
+        pkgs = 'NetworkManager systemd-units openssh-server systemd procps-ng timezone dnf sudo usbutils passwd basesystem-minimal rosa-repos-keys rosa-repos'
         self.log_.l('Making chroot in {}'.format(self.rootfs_dir_))
+        subprocess.check_output(['/usr/bin/sudo', 'systemctl', 'reset-failed'])
+        if self.check_machine_exist():
+            self.interrupt_machine()
+        
         if os.path.exists(self.rootfs_dir_):
             if os.path.ismount(self.rootfs_dir_):
                 self.log_.l('Directory in mounted, unmount')
                 subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.cache_dir_])
                 subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.boot_dir_])
                 subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.rootfs_dir_])
+            self.log_.l('Removing {} dir'.format(self.rootfs_dir_))
             subprocess.check_output(['/usr/bin/sudo', 'rm', '-rf', self.rootfs_dir_])
         subprocess.check_output(['/usr/bin/sudo', 'rpm', '-Uvh', '--ignorearch', '--nodeps', repo_pkg, '--root', self.rootfs_dir_])
         subprocess.check_output(['/usr/bin/sudo', 'dnf', '-y', 'install', '--nogpgcheck', '--installroot=' + self.rootfs_dir_, \
@@ -100,12 +122,10 @@ class NspawnMaker:
         f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
         f.write(self.autologin_service_)
 
-        # if self.check_machine_exist(self.machine_name_):
-        #    self.log_.l('Machine {} exists. Interrupting its work.')
-        #    self.interrupt_machine(self.machine_name_)
+        self.create_network_bridge('rosa')
 
         devnull = open('/dev/null', "w")
-        p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_], stdout=devnull)
+        p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_, '--network-bridge', 'rosa'], stdout=devnull)
 
         time.sleep(3)
 

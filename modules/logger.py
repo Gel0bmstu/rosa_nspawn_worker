@@ -16,7 +16,7 @@ class Logger:
 
     log_color_palette_ = {
         'DBG' : '\033[94m',
-        'WRN' : '\033[93m',
+        'WRN' : '\033[35m',
         'ERR' : '\033[91m',
         'END' : '\033[0m'
     }

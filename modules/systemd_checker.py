@@ -54,7 +54,7 @@ class SystemdChecker:
 
             if not self.check_machine_exist(self.machine_name_):
                 self.log_.e(u"Machine {} not founded/running, please check 'machinectl list'.".format(self.machine_name_))
-                exit(1)
+                # exit(1)
 
             # Apply users's settings
             # if username:
@@ -72,7 +72,7 @@ class SystemdChecker:
             self.release_ = release
         except Exception as e:
             self.log_.e('Unable to create Checker class: {}\n'.format(e))
-            exit(1)
+            # exit(1)
 
     # Private methods
     
@@ -90,7 +90,7 @@ class SystemdChecker:
             print('Commands from .json loaded successfully.')
         except Exception as e:
             print('Unable to parse commands.json file: \n', e)
-            exit(1)
+            # exit(1)
 
     def get_current_params_(self):
         try:
@@ -110,7 +110,7 @@ class SystemdChecker:
             self.log_.l('Getting the current system state - successfully.')
         except Exception as e:
             self.log_.e('Unable to get current params:\n{}'.format(e))
-            exit(1)
+            # exit(1)
 
     # Public methods
 
@@ -129,7 +129,7 @@ class SystemdChecker:
             print('Error:', err, 'Output:', out)
         except Exception as e:
             print('Unable to login in container: \n', e)
-            exit(1)
+            # exit(1)
 
     def check_machine_exist(self, machine_name):
         self.log_.l('Checking machine {} for existing ...'.format(self.machine_name_))
@@ -191,7 +191,7 @@ class SystemdChecker:
                 # \n (empty line)
                 #
                 # I remove first and last 2 lines, end delete all '*[*]: ' from log lines,
-                # then added output to cmd_ out
+                # then added output to cmd_out
                 # cmd_out = re.sub(r'--.*\n', '', output)
                 cmd_out = ''
 
@@ -213,7 +213,7 @@ class SystemdChecker:
 
         except Exception as e:
             self.log_.e('Unable to execute command in container: \n{}'.format(e))
-            exit(1)
+            # exit(1)
 
     def get_logs_of_service_for_last_session(self, service):
         output = subprocess.check_output(self.commands_['get_service_logs_for_last_session'] + [service])
@@ -242,7 +242,7 @@ class SystemdChecker:
             return
 
         self.log_.e('Error logs of the {}.service is not empty, terminated.'.format(service))
-        exit(1)
+        # exit(1)
 
     def get_logs_of_service(self, service):
         output = subprocess.check_output(self.commands_['get_output_by_unit'] + [service])
@@ -282,7 +282,7 @@ class SystemdChecker:
         #     return
 
         # self.log_.e('Port {} is closed! Terminating.'.format(port))
-        # exit(1)
+        # # exit(1)
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # 1 sec timeout
@@ -320,12 +320,12 @@ class SystemdChecker:
 
         if not service_status:
             self.log_.e('An error occurred while executing a command, please, run script again')
-            exit(1)
+            # exit(1)
 
         if service_status['Description']:
             if 'Unit {}.service could not be found'.format(service) in service_status['Description']:
                 self.log_.e('Service {} could not be found, please check the spelling of the entered service name.')
-                exit(1)
+                # exit(1)
 
         return service_status
 
@@ -335,7 +335,7 @@ class SystemdChecker:
         status = self.get_current_status_of_service(service)
         if status['Active'].split()[0] != 'active':
             self.log_.e('Service {} is not active! Terminating.'.format(service))
-            exit(1)
+            # exit(1)
         
         self.log_.l('Service {} is active, all is ok!'.format(service))
 
@@ -354,7 +354,7 @@ class SystemdChecker:
             return False
         except Exception as e:
             self.log_.e('Unable to get current systemd state:\n{}'.format(e))
-            exit(1)
+            # exit(1)
 
     def check_systemd_error_logs(self):
         try:
@@ -379,4 +379,4 @@ class SystemdChecker:
             return False
         except Exception as e:
             self.log_.e('Unable to check systemd logs:\n{}'.format(e))
-            exit(1)
+            # exit(1)

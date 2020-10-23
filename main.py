@@ -53,7 +53,6 @@ def parse_json_configs(path_to_config = "config.json"):
         exit() 
 
 if __name__ == '__main__':
-
     # Parsing script arguments and config file
     args = parse_script_arguments()
     configs = parse_json_configs()
@@ -71,7 +70,6 @@ if __name__ == '__main__':
     nm = NspawnMaker(logger, release='2019.1', arch='x86_64')
     nm.make_container()
 
-    pc = SshChecker(logger, 'rosa')
     sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
 
     # Work with systemd container
