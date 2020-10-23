@@ -23,6 +23,15 @@ def parse_script_arguments():
                             2 - errors and warnings, 3 - errors, warnings and info, 4 - precursor and debug.')
     parser.add_argument('-m', '--machine', action='store', default='', dest='machine_name', help='set systemd machine name')
     parser.add_argument('-r', '--root-dir', action='store', default='', dest='root_dir', help='set systemd container root directory')
+    
+    # Control params
+
+    # Cehck state of nspawn container
+    parser.add_argument('-c', '--check-state', action='store_true', dest='check_state', help='check sysstemd-container state')
+
+    # Cehck status of service
+    parser.add_argument('-s', '--service', action='store', default=None, dest='service_name', help='check state of setted service in container')
+
 
     return parser.parse_args()
 
@@ -67,11 +76,13 @@ if __name__ == '__main__':
 
     # Work with systemd container
     sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
-    sc.check_systemd_state()
-    sc.check_current_status_of_service('dbus')
-    sc.check_logs_error_of_service_for_last_session('dbus')
-    # print(sc.execute_command_in_container_shell('/usr/bin/sudo ls -la /home/rosa/', True))
-    sc.check_systemd_error_logs()
+    if args.check_state:
+        sc.check_systemd_state()
+        sc.check_systemd_error_logs()
+    
+    if args.service_name != None:
+        sc.check_current_status_of_service(args.service_name)
+        sc.check_logs_error_of_service_for_last_session(args.service_name)
 
     # Work with container network
     pc = SshChecker(logger, 'rosa')
