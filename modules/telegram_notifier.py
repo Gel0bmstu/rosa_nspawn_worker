@@ -10,7 +10,6 @@ class TelegramNotifier:
     
     def send_message(self, message):
         for chat in self.chats_id_:
-            print(message, chat)
             response = requests.post(url='https://api.telegram.org/bot{}/sendMessage'.format(self.api_token_),
                 data = {
                     "chat_id": chat,
@@ -23,7 +22,6 @@ class TelegramNotifier:
         link = '{url}job/{name}/{id}/console'.format(url=os.getenv('JENKINS_URL'), name=os.getenv('JOB_BASE_NAME'), id=os.getenv('BUILD_ID'))
 
         for chat in self.chats_id_:
-            print(message, chat)
             response = requests.post(url='https://api.telegram.org/bot{}/sendMessage'.format(self.api_token_),
                 data = {
                     "chat_id": chat,
