@@ -17,7 +17,7 @@ class NspawnMaker:
     cache_dir_ =  rootfs_dir_ + '/var/cache/dnf'
     autologin_service_ = u'[Service] \n \
         ExecStart= \n \
-        ExecStart=-/sbin/agetty --noclear --autologin omv --keep-baud console 115200,38400,9600 $TERM'
+        ExecStart=-/sbin/agetty --noclear --autologin root --keep-baud console 115200,38400,9600 $TERM'
 
 
     def __init__(self, logger, release='2019.1', arch='x86_64', machine_name='rosa2019.1', rootfs_dir=''):
