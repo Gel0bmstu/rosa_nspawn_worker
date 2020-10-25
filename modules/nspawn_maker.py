@@ -144,10 +144,13 @@ class NspawnMaker:
                     if not os.path.exists(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'):
                         subprocess.check_output(['/usr/bin/sudo', 'mkdir', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'])
                     
-                    subprocess.check_output(['/usr/bin/sudo', 'install', '-m', '666', '/dev/null', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
+                    subprocess.check_output(['/usr/bin/sudo', 'install', '-m', '666', '/dev/null', \
+                        self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
                     f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
                     f.write(self.autologin_service_)
+
+                    subprocess.check_output(['/usr/bin/sudo', 'chmod', '644', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
                     self.create_network_bridge('rosa')
 
