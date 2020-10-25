@@ -33,6 +33,7 @@ class SystemdChecker:
 
     def __init__(self,
         logger,
+        tg,
         configs,
         machine_name='', 
         username='',
@@ -46,6 +47,9 @@ class SystemdChecker:
             # Set logger
             self.log_ = logger
 
+            # Set telegram notifier bot
+            self.tg_ = tg
+
             # Apply machine name
             if machine_name:
                 self.machine_name_ = machine_name
@@ -55,8 +59,10 @@ class SystemdChecker:
             self.parse_json_commands_()
 
             if not self.check_machine_exist(self.machine_name_):
-                self.log_.e(u"Machine {} not founded/running, please check 'machinectl list'.".format(self.machine_name_))
-                self.tg_.alert(err)
+                err = "Machine {} not founded/running, please check 'machinectl list'.".format(self.machine_name_)
+                self.log_.e(err)
+                self.tg_.add_error_(err)
+                return
 
             # Apply users's settings
             # if username:
@@ -72,12 +78,10 @@ class SystemdChecker:
             # Apply os settings
             self.arch_ = arhc
             self.release_ = release
-
-            # Set telegram notifier bot
-            self.tg_ = TelegramNotifier()
         except Exception as e:
-            self.log_.e('Unable to create Checker class: {}\n'.format(e))
-            self.tg_.alert(err)
+            err = 'Unable to create SystemdChecker class: {}\n'.format(e)
+            self.log_.e(err)
+            self.tg_.add_error_(err)
 
     # Private methods
     
@@ -96,7 +100,7 @@ class SystemdChecker:
         except Exception as e:
             err = 'Unable to parse commands.json file: \n{}'.format(e)
             print(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
 
     def get_current_params_(self):
         try:
@@ -117,7 +121,7 @@ class SystemdChecker:
         except Exception as e:
             err = 'Unable to get current params:\n{}'.format(e)
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
 
     # Public methods
 
@@ -136,7 +140,7 @@ class SystemdChecker:
         except Exception as e:
             err = 'Unable to login in container: \n{}'.format(e)
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
 
     def check_machine_exist(self, machine_name):
         self.log_.l('Checking machine {} for existing ...'.format(self.machine_name_))
@@ -221,7 +225,7 @@ class SystemdChecker:
         except Exception as e:
             err = 'Unable to execute command in container: \n{}'.format(e)
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
 
     def get_logs_of_service_for_last_session(self, service):
         output = subprocess.check_output(self.commands_['get_service_logs_for_last_session'] + [service])
@@ -248,7 +252,7 @@ class SystemdChecker:
 
         err = 'Error logs of the {}.service is not empty, terminated.'.format(service)
         self.log_.e(err)
-        self.tg_.alert(err)
+        self.tg_.add_error_(err)
 
     def get_logs_of_service(self, service):
         output = subprocess.check_output(self.commands_['get_output_by_unit'] + [service])
@@ -288,7 +292,7 @@ class SystemdChecker:
         #     return
 
         # self.log_.e('Port {} is closed! Terminating.'.format(port))
-        # self.tg_.alert(err)
+        # self.tg_.add_error_(err)
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # 1 sec timeout
@@ -327,13 +331,13 @@ class SystemdChecker:
         if not service_status:
             err = 'An error occurred while executing a command, please, run script again'
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
 
         if service_status['Description']:
             if 'Unit {}.service could not be found'.format(service) in service_status['Description']:
                 err = 'Service {} could not be found, please check the spelling of the entered service name.'
                 self.log_.e(err)
-                self.tg_.alert(err)
+                self.tg_.add_error_(err)
 
         return service_status
 
@@ -344,7 +348,7 @@ class SystemdChecker:
         if status['Active'].split()[0] != 'active':
             err = 'Service {} is not active! Terminating.'.format(service)
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
         
         self.log_.l('Service {} is active, all is ok!'.format(service))
 
@@ -360,13 +364,13 @@ class SystemdChecker:
 
             err = 'Systemd not running, current state is: {}'.format(self.current_params_['SystemState'])
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
         
             return False
         except Exception as e:
             err = 'Unable to get current systemd state:\n{}'.format(e)
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)
 
     def check_systemd_error_logs(self):
         try:
@@ -392,4 +396,4 @@ class SystemdChecker:
         except Exception as e:
             err = 'Unable to check systemd logs:\n{}'.format(e)
             self.log_.e(err)
-            self.tg_.alert(err)
+            self.tg_.add_error_(err)

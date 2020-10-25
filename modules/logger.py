@@ -21,6 +21,8 @@ class Logger:
         'END' : '\033[0m'
     }
 
+    # tg_ = {}
+
     def __init__(self, \
         log_file_mode, \
         log_debug_mode, \
@@ -32,6 +34,8 @@ class Logger:
         try:
             # Set logger configs
             self.configs_ = configs
+
+            # self.tg_ = TelegramNotifier()  
 
             # Set logger settings
             if log_debug_mode == None:

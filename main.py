@@ -9,6 +9,7 @@ from modules.systemd_checker import SystemdChecker
 from modules.logger import Logger
 from modules.ssh_checker import SshChecker
 from modules.nspawn_maker import NspawnMaker
+from modules.telegram_notifier import TelegramNotifier
 
 def parse_script_arguments():
     parser = argparse.ArgumentParser(description='Script to work with systemd-nspawn container.')
@@ -25,6 +26,9 @@ def parse_script_arguments():
     parser.add_argument('-r', '--root-dir', action='store', default='', dest='root_dir', help='set systemd container root directory')
     
     # Control params
+
+    # Set rootfs arch
+    parser.add_argument('-a', '--arch', action='store', default='x86_64', dest='arch', help='set systemd container rootfs arch')
 
     # Cehck state of nspawn container
     parser.add_argument('-c', '--check-state', action='store_true', dest='check_state', help='check sysstemd-container state')
@@ -53,40 +57,45 @@ def parse_json_configs(path_to_config = "config.json"):
         exit() 
 
 if __name__ == '__main__':
-    # Parsing script arguments and config file
-    args = parse_script_arguments()
-    configs = parse_json_configs()
+    try:
+        # Parsing script arguments and config file
+        args = parse_script_arguments()
+        configs = parse_json_configs()
 
-    # Creating logger
-    logger = Logger(log_debug_mode=args.logger_debug_mode, \
-        log_level=args.logger_level, \
-        log_file_mode=args.logger_filelog_mode, \
-        user_logfile_path=args.logger_logfile_path, \
-        dir_path = configs['logger_logfile_path'], \
-        configs=configs)
+        # Creating logger
+        logger = Logger(log_debug_mode=args.logger_debug_mode, \
+            log_level=args.logger_level, \
+            log_file_mode=args.logger_filelog_mode, \
+            user_logfile_path=args.logger_logfile_path, \
+            dir_path = configs['logger_logfile_path'], \
+            configs=configs)
 
-    subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
-    
-    nm = NspawnMaker(logger, release='2019.1', arch='x86_64')
-    nm.make_container()
+        telegram_notifier = TelegramNotifier()
 
-    sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
+        subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
+        
+        nm = NspawnMaker(logger, telegram_notifier, release='2019.1', arch=args.arch)
+        nm.make_container()
 
-    # Work with systemd container
-    sc = SystemdChecker(logger, configs, machine_name=args.machine_name)
-    if args.check_state:
-        sc.check_systemd_state()
-        sc.check_systemd_error_logs()
-    
-    if args.service_name != None:
-        sc.check_current_status_of_service(args.service_name)
-        sc.check_logs_error_of_service_for_last_session(args.service_name)
+        # Work with systemd container
+        sc = SystemdChecker(logger, telegram_notifier, configs, machine_name=args.machine_name)
+        if args.check_state:
+            sc.check_systemd_state()
+            sc.check_systemd_error_logs()
+        
+        if args.service_name != None:
+            sc.check_current_status_of_service(args.service_name)
+            sc.check_logs_error_of_service_for_last_session(args.service_name)
 
-    # Work with container network
-    pc = SshChecker(logger, 'rosa')
-    pc.set_bridge_free_ip()
-    pc.check_if_port_is_listening(22, ip = pc.get_bridge_ip())
+        # Work with container network
+        pc = SshChecker(logger, telegram_notifier, 'rosa')
+        pc.set_bridge_free_ip()
+        pc.check_if_port_is_listening(22, ip = pc.get_bridge_ip())
 
-    nm.interrupt_machine()
+        nm.interrupt_machine()
 
-    subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
+        subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
+
+        telegram_notifier.alert()
+    except Exception as e:
+        telegram_notifier.alert()
