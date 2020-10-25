@@ -96,6 +96,10 @@ if __name__ == '__main__':
 
         subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
 
-        telegram_notifier.alert()
+        if telegram_notifier.get_error_stack_size_() > 0:
+            telegram_notifier.alert()
+            exit(-1)
     except Exception as e:
         telegram_notifier.alert()
+        exit(-1)
+

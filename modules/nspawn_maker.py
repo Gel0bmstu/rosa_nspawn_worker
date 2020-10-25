@@ -144,7 +144,7 @@ class NspawnMaker:
                     if not os.path.exists(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'):
                         subprocess.check_output(['/usr/bin/sudo', 'mkdir', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'])
                     
-                    subprocess.check_output(['/usr/bin/sudo', 'install', '-m', '777', '/dev/null', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
+                    subprocess.check_output(['/usr/bin/sudo', 'install', '-m', '666', '/dev/null', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
                     f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
                     f.write(self.autologin_service_)

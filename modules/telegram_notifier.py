@@ -36,25 +36,24 @@ class TelegramNotifier:
         self.rootfs_download_link_ = download
 
     def alert(self):
-        if self.get_error_stack_size_() > 0:
-            alert_message = ['There is some errors:\n\n{errors}\n\n'
-            'Rootfs archive name: {rootfs_name}\n',
-            'Rootfs build date:   {rootfs_build_date}\n'
-            'Rootfs archive link: {rootfs_download_link}\n\n'
-            'Build log: {build_log_link}\n']
+        alert_message = ['There is some errors:\n\n{errors}\n\n'
+        'Rootfs archive name: {rootfs_name}\n',
+        'Rootfs build date:   {rootfs_build_date}\n'
+        'Rootfs archive link: {rootfs_download_link}\n\n'
+        'Build log: {build_log_link}\n']
 
-            link = '{url}job/{name}/{id}/console'.format(url=os.getenv('JENKINS_URL'), name=os.getenv('JOB_BASE_NAME'), id=os.getenv('BUILD_ID'))
+        link = '{url}job/{name}/{id}/console'.format(url=os.getenv('JENKINS_URL'), name=os.getenv('JOB_BASE_NAME'), id=os.getenv('BUILD_ID'))
 
-            for chat in self.chats_id_:
-                response = requests.post(url='https://api.telegram.org/bot{}/sendMessage'.format(self.api_token_),
-                    data = {
-                        "chat_id": chat,
-                        "text": ''.join(alert_message).format( \
-                            errors='\n\n'.join(self.error_stack_), 
-                            rootfs_name=self.rootfs_filename_,
-                            rootfs_build_date=self.rootfs_build_date_,
-                            rootfs_download_link=self.rootfs_download_link_,
-                            build_log_link=link)
-                        # "parse_mode": "MarkdownV2"
-                    }
-                )
+        for chat in self.chats_id_:
+            response = requests.post(url='https://api.telegram.org/bot{}/sendMessage'.format(self.api_token_),
+                data = {
+                    "chat_id": chat,
+                    "text": ''.join(alert_message).format( \
+                        errors='\n\n'.join(self.error_stack_), 
+                        rootfs_name=self.rootfs_filename_,
+                        rootfs_build_date=self.rootfs_build_date_,
+                        rootfs_download_link=self.rootfs_download_link_,
+                        build_log_link=link)
+                    # "parse_mode": "MarkdownV2"
+                }
+            )
