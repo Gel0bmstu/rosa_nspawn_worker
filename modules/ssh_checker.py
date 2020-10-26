@@ -9,18 +9,18 @@ import ipaddress
 import os
 import paramiko
 
-from modules.telegram_notifier import TelegramNotifier
+from modules.notifier import Notifier
 
 class SshChecker:
     log_ = {}
     bridge_name_ = ''
     bridge_ip_ = ''
-    tg_ = {}
+    notifier_ = {}
 
-    def __init__(self, logger, tg, bridge_name = 'rosa'):
+    def __init__(self, logger, notifier, bridge_name = 'rosa'):
         self.log_ = logger
         self.bridge_name_ = bridge_name
-        self.tg_ = tg
+        self.notifier_ = notifier
 
     def get_bridge_ip(self):
         return self.bridge_ip_
@@ -38,7 +38,7 @@ class SshChecker:
         except Exception as e:
             err = 'Unable to get router ip address:\n{}'.format(e)
             self.log_.e(err)
-            self.tg_.add_error_(err)
+            self.notifier_.add_error_(err)
 
     def get_local_network_addres(self):
         try:
@@ -53,7 +53,7 @@ class SshChecker:
         except Exception as e:
             err = 'Unable to get local subnet addres:\n{}'.format(e)
             self.log_.e(err)
-            self.tg_.add_error_(err)
+            self.notifier_.add_error_(err)
 
     def get_free_ip_addr_in_local_network(self):
         try:
@@ -75,7 +75,7 @@ class SshChecker:
         except Exception as e:
             err = 'Unable to get free local subnet addres:\n{}'.format(e)
             self.log_.e(err)
-            self.tg_.add_error_(err)
+            self.notifier_.add_error_(err)
 
     def get_current_ip_of_interface(self, interface):
         try:
@@ -92,7 +92,7 @@ class SshChecker:
         except Exception as e:
             err = 'Unable tto get ip of {}:\n{}'.format(interface, e)
             self.log_.e(err)
-            self.tg_.add_error_(err)
+            self.notifier_.add_error_(err)
 
     def set_bridge_free_ip(self):
         try:
@@ -115,7 +115,7 @@ class SshChecker:
         except Exception as e:
             err = 'Unable to set free ip to bridge:\n{}'.format(e)
             self.log_.e(err)
-            self.tg_.add_error_(err)
+            self.notifier_.add_error_(err)
 
     def check_if_port_is_listening(self, port = 22, ip = None):
         if ip == None and self.bridge_ip_:

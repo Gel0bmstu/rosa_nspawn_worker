@@ -5,7 +5,7 @@ import glob
 import re
 import time
 
-from modules.telegram_notifier import TelegramNotifier
+from modules.notifier import Notifier
 
 class NspawnMaker:
 
@@ -14,7 +14,7 @@ class NspawnMaker:
     arch_ = ''
     machine_name_ = ''
     rootfs_dir_ = ''
-    tg_ = {}
+    notifier_ = {}
     # rootfs_dir_ = '/home/oleg/uptade_nspawn_container'
     boot_dir_ =  rootfs_dir_ + '/boot'
     cache_dir_ =  rootfs_dir_ + '/var/cache/dnf'
@@ -23,7 +23,7 @@ class NspawnMaker:
         ExecStart=-/sbin/agetty --noclear --autologin root --keep-baud console 115200,38400,9600 $TERM'
 
 
-    def __init__(self, logger, tg, release='2019.1', arch='x86_64', machine_name='rosa2019.1', rootfs_dir=''):
+    def __init__(self, logger, notifier, release='2019.1', arch='x86_64', machine_name='rosa2019.1', rootfs_dir=''):
         self.log_ = logger
         self.release_ = release
         self.arch_ = arch
@@ -37,9 +37,9 @@ class NspawnMaker:
             self.log_.l('Root directory is {}'.format(self.rootfs_dir_))
 
         self.boot_dir =  self.rootfs_dir_ + '/boot'
-        self.cache_dir = self.rootfs_dir_ + '/var/cache/dnf'  
+        self.cache_dir = self.rootfs_dir_ + '/var/cache/dnf'   
 
-        self.tg_ = tg
+        self.notifier_ = notifier
 
     def create_network_bridge(self, bridge_name='rosa'):
         self.log_.l('Creating network bridge {}'.format(bridge_name))
@@ -107,7 +107,7 @@ class NspawnMaker:
         for result in build_results:
             if 'rootfs' in result['file_name']:
                 try:
-                    self.tg_.set_rootfs_params( \
+                    self.notifier_.set_rootfs_params( \
                         name=result['file_name'], \
                         date=json['product_build_list']['notified_at'], \
                         download=result['url'])
@@ -164,9 +164,9 @@ class NspawnMaker:
                 except Exception as e:
                     err = 'Unable to create rootfs:\n{}.'.format(e)
                     self.log_.e(err)
-                    self.tg_.add_error_(err)     
+                    self.notifier_.add_error_(err)     
                     return            
             
         err = 'Unable to get rootfs archive form abf:\nNo archive in last buildlist.'
         self.log_.e(err)
-        self.tg_.add_error_(err)
+        self.notifier_.add_error_(err)

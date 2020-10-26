@@ -9,7 +9,7 @@ from modules.systemd_checker import SystemdChecker
 from modules.logger import Logger
 from modules.ssh_checker import SshChecker
 from modules.nspawn_maker import NspawnMaker
-from modules.telegram_notifier import TelegramNotifier
+from modules.notifier import Notifier
 
 def parse_script_arguments():
     parser = argparse.ArgumentParser(description='Script to work with systemd-nspawn container.')
@@ -70,15 +70,15 @@ if __name__ == '__main__':
             dir_path = configs['logger_logfile_path'], \
             configs=configs)
 
-        telegram_notifier = TelegramNotifier()
+        notifier = Notifier()
 
         subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
         
-        nm = NspawnMaker(logger, telegram_notifier, release='2019.1', arch=args.arch)
+        nm = NspawnMaker(logger, notifier, release='2019.1', arch=args.arch)
         nm.make_container()
 
         # Work with systemd container
-        sc = SystemdChecker(logger, telegram_notifier, configs, machine_name=args.machine_name)
+        sc = SystemdChecker(logger, notifier, configs, machine_name=args.machine_name)
         if args.check_state:
             sc.check_systemd_state()
             sc.check_systemd_error_logs()
@@ -88,7 +88,7 @@ if __name__ == '__main__':
             sc.check_logs_error_of_service_for_last_session(args.service_name)
 
         # Work with container network
-        pc = SshChecker(logger, telegram_notifier, 'rosa')
+        pc = SshChecker(logger, notifier, 'rosa')
         pc.set_bridge_free_ip()
         pc.check_if_port_is_listening(22, ip = pc.get_bridge_ip())
 
@@ -96,10 +96,9 @@ if __name__ == '__main__':
 
         subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
 
-        if telegram_notifier.get_error_stack_size_() > 0:
-            telegram_notifier.alert()
+        if notifier.get_error_stack_size_() > 0:
+            notifier.alert()
             exit(-1)
     except Exception as e:
-        telegram_notifier.alert()
+        notifier.alert()
         exit(-1)
-
