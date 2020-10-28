@@ -25,12 +25,6 @@ class SystemdChecker:
     arch_ = ''
     notifier_ = {}
 
-    # Subprocess commands
-    # get_current_params_command_ = ["machinectl", "--machine="+machine_name_,"show"]
-    # check_systemd_logs_command_ = ["journalctl", "-p", "3", "-xb", "-M", machine_name_]
-    # login_in_container_command_ = ["machinectl", "login", machine_name_]
-    # execute_command_in_container_shell_command_ = ["sudo", "machinectl", "shell", machine_name_]
-
     def __init__(self,
         logger,
         notifier,
@@ -64,20 +58,13 @@ class SystemdChecker:
                 self.notifier_.add_error_(err)
                 return
 
-            # Apply users's settings
-            # if username:
-            #     self.username_ = username
-            # else:
-            #     self.username_ = os.environ['USER']
-
-            # if user_passwd:
-            #     self.user_passwd_ = user_passwd
-            # else:
-            #     self.user_passwd_ = os.environ['PASSWORD']
-
             # Apply os settings
             self.arch_ = arhc
             self.release_ = release
+
+            # Some sshd fixes
+            self.execute_command_in_container_shell('/usr/bin/passwd -d root')
+            self.execute_command_in_container_shell('/usr/bin/systemctl restart sshd')
         except Exception as e:
             err = 'Unable to create SystemdChecker class: {}\n'.format(e)
             self.log_.e(err)
@@ -122,7 +109,7 @@ class SystemdChecker:
             err = 'Unable to get current params:\n{}'.format(e)
             self.log_.e(err)
             self.notifier_.add_error_(err)
-
+        
     # Public methods
 
     # FIXME: nu eto ne smeshno daje, davai dodelay allo) 

@@ -52,7 +52,7 @@ class NspawnMaker:
                 return
 
         subprocess.check_output(['/usr/bin/sudo', 'brctl', 'addbr', bridge_name])
-        
+
     def check_machine_exist(self, machine=''):
         if machine == '':
             machine = self.machine_name_
@@ -153,6 +153,31 @@ class NspawnMaker:
                     subprocess.check_output(['/usr/bin/sudo', 'chmod', '644', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
                     self.create_network_bridge('rosa')
+
+                    self.log_.l('Installing utils to container ...')
+
+                    pkgs = 'NetworkManager systemd-units openssh-server systemd procps-ng timezone dnf sudo usbutils passwd basesystem-minimal rosa-repos-keys rosa-repos git vim vim-enhanced curl'
+
+                    subprocess.check_output(['/usr/bin/sudo', 'dnf', 'install', '-y', '--installroot', self.rootfs_dir_, '--nogpgcheck', \
+                        '--releasever=' + self.release_, '--forcearch=' + self.arch_] + pkgs.split())
+
+                    self.log_.l('Utils installed successfully')
+
+                    subprocess.check_output(['/usr/bin/sudo', 'useradd', '--prefix', self.rootfs_dir_, 'omv', '-p', 'pabc4KTyGYBtg', '-G', 'wheel', '-m'])
+                    self.log_.l('User omv added successfully.')
+
+                    self.log_.l('Configuring sshd settings ...')
+
+                    ps = subprocess.Popen(['/usr/bin/echo', ""], stdout=subprocess.PIPE)
+                    output = subprocess.check_output(['/usr/bin/sudo', 'tee', self.rootfs_dir_ + '/etc/ssh/denyusers'], stdin=ps.stdout)
+                    ps.wait()
+
+                    subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#PermitRootLogin\ prohibit\-password/PermitRootLogin\ yes/g', \
+                        self.rootfs_dir_ + '/etc/ssh/sshd_config'])
+                    subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#\ *PasswordAuthentication/PasswordAuthentication/g', \
+                        self.rootfs_dir_ + '/etc/ssh/ssh_config'])
+
+                    self.log_.l('Sshd configured successfully.')
 
                     devnull = open('/dev/null', "w")
                     p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_, '--network-bridge', 'rosa'], stdout=devnull)
