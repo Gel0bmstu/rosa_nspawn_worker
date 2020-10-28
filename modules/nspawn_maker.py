@@ -45,11 +45,13 @@ class NspawnMaker:
         self.log_.l('Creating network bridge {}'.format(bridge_name))
         bridge_list = subprocess.check_output(['/usr/bin/sudo', 'brctl', 'show'])
         bridges = bridge_list.decode('utf-8').split('\n')
-        for b in bridges:
+        for b in bridges[1:]:
             line = b.split()
-            if bridge_name == line[0]:
-                self.log_.l('bridge {} is already exist'.format(bridge_name))
-                return
+            self.log_.d(line)
+            if len(line) > 0:
+                if bridge_name == line[0]:
+                    self.log_.l('bridge {} is already exist'.format(bridge_name))
+                    return
 
         subprocess.check_output(['/usr/bin/sudo', 'brctl', 'addbr', bridge_name])
 
