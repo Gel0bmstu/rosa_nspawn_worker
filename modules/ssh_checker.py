@@ -48,7 +48,7 @@ class SshChecker:
 
             self.log_.l('Router ip address received successfully.')
 
-            return re.sub(r'\d*$', '0/24', router_address)
+            return re.sub(r'\.\d*[\/\d*]*$', '0/24', router_address)
 
         except Exception as e:
             err = 'Unable to get local subnet addres:\n{}'.format(e)
@@ -60,7 +60,7 @@ class SshChecker:
             self.log_.l('Try to get local free ip address ...')
 
             local_subnet_address = self.get_local_network_addres()
-            print('local subnet address', local_subnet_address)
+            self.log_.l('local subnet address', local_subnet_address)
             addresses_list = ipaddress.ip_network(local_subnet_address)
 
             try:
