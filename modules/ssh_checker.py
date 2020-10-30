@@ -60,7 +60,7 @@ class SshChecker:
             self.log_.l('Try to get local free ip address ...')
 
             local_subnet_address = self.get_local_network_addres()
-            self.log_.l('local subnet address', local_subnet_address)
+            self.log_.l('local subnet address {}'.format(local_subnet_address))
             addresses_list = ipaddress.ip_network(local_subnet_address)
 
             try:
