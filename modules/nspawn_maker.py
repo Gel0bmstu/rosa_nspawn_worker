@@ -15,8 +15,9 @@ class NspawnMaker:
     machine_name_ = ''
     rootfs_dir_ = ''
     notifier_ = {}
-    # rootfs_dir_ = '/home/oleg/uptade_nspawn_container'
+    # rootfs_dir_ = self.home_dir_ + '/uptade_nspawn_container'
     boot_dir_ =  rootfs_dir_ + '/boot'
+    home_dir_ = ''
     cache_dir_ =  rootfs_dir_ + '/var/cache/dnf'
     autologin_service_ = u'[Service] \n \
         ExecStart= \n \
@@ -33,11 +34,15 @@ class NspawnMaker:
             self.log_.l('Changing contaner root directory for {}'.format(rootfs_dir))
             self.rootfs_dir_ = rootfs_dir
         else:
-            self.rootfs_dir_ = '/home/oleg/rosa{}_{}'.format(self.release_, self.arch_)
+            self.rootfs_dir_ = self.home_dir_ + '/rosa{}_{}'.format(self.release_, self.arch_)
             self.log_.l('Root directory is {}'.format(self.rootfs_dir_))
 
         self.boot_dir =  self.rootfs_dir_ + '/boot'
         self.cache_dir = self.rootfs_dir_ + '/var/cache/dnf'   
+
+        self.home_dir_    = os.environ.get('HOME')
+        self.abf_token_   = os.environ.get('ABF_TOKEN')
+        self.root_passwd_ = os.environ.get('ROOT_PASSWORD')
 
         self.notifier_ = notifier
 
@@ -97,103 +102,103 @@ class NspawnMaker:
 
         self.log_.l('Making nspawn container ...')
         response = requests.get('https://abf.io/api/v1/products/{}/product_build_lists.json'.format(product_id), \
-            auth=requests.auth.HTTPBasicAuth('S2hR6zAK7GtZ2wDniwDG', ''))
+            auth=requests.auth.HTTPBasicAuth(self.abf_token_, ''))
         json = response.json()
-        last_build_list_id = json['product_build_lists'][0]['id']
 
-        response = requests.get('https://abf.io/api/v1/product_build_lists/{}.json'.format(last_build_list_id), \
-            auth=requests.auth.HTTPBasicAuth('S2hR6zAK7GtZ2wDniwDG', ''))
-        json = response.json()
-        build_results = json['product_build_list']['results']
+        for i in range(len(json['product_build_lists'])):
+            last_build_list_id = json['product_build_lists'][i]['id']
 
-        for result in build_results:
-            if 'rootfs' in result['file_name']:
-                try:
-                    self.notifier_.set_rootfs_params( \
-                        name=result['file_name'], \
-                        date=json['product_build_list']['notified_at'], \
-                        download=result['url'])
+            response = requests.get('https://abf.io/api/v1/product_build_lists/{}.json'.format(last_build_list_id), \
+                auth=requests.auth.HTTPBasicAuth(self.abf_token_, ''))
+            json = response.json()
+            build_results = json['product_build_list']['results']
 
-                    self.log_.l('Downloading rootfs archive ...')
-                    r = requests.get(result['url'])
+            for result in build_results:
+                if 'rootfs' in result['file_name']:
+                    try:
+                        self.notifier_.set_rootfs_params( \
+                            name=result['file_name'], \
+                            date=json['product_build_list']['notified_at'], \
+                            download=result['url'])
 
-                    if os.path.exists('/home/oleg/rootfs.tar.xz'):
-                        self.log_.l('/home/oleg/rootfs.tar.xz is already exixsts, removing.')
-                        os.remove('/home/oleg/rootfs.tar.xz')
+                        self.log_.l('Downloading rootfs archive ...')
+                        r = requests.get(result['url'])
 
-                    with open('/home/oleg/rootfs.tar.xz', 'wb') as f:
-                        f.write(r.content)
+                        if os.path.exists(self.home_dir_ + '/rootfs.tar.xz'):
+                            self.log_.l(self.home_dir_ + '/rootfs.tar.xz is already exixsts, removing.')
+                            os.remove(self.home_dir_ + '/rootfs.tar.xz')
 
-                    self.log_.l('Rootfs downloaded successfully, unpacking to {} ...'\
-                        .format(self.rootfs_dir_))
+                        with open(self.home_dir_ + '/rootfs.tar.xz', 'wb') as f:
+                            f.write(r.content)
 
-                    if os.path.exists(self.rootfs_dir_):
-                        self.log_.l('Directory {} is already exists, removing ...'.format(self.rootfs_dir_))
-                        if os.path.ismount(self.rootfs_dir_):
-                            self.log_.l('Directory is mounted, unmount ...')
-                            subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.cache_dir_])
-                            subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.boot_dir_])
-                            subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.rootfs_dir_])
-                            self.log_.l('Directory unmounted successfully.')
-                        self.log_.l('Removing {} dir'.format(self.rootfs_dir_))
-                        subprocess.check_output(['/usr/bin/sudo', 'rm', '-rf', self.rootfs_dir_])
-                        self.log_.l('Old directory removed successfuly.')
+                        self.log_.l('Rootfs downloaded successfully, unpacking to {} ...'\
+                            .format(self.rootfs_dir_))
 
-                    os.mkdir(self.rootfs_dir_)
-                    subprocess.check_output(['/usr/bin/sudo', 'tar', '-xvf', '/home/oleg/rootfs.tar.xz', '-C', self.rootfs_dir_])
-                    self.log_.l('Rootfs extracted succesfully to {}.'.format(self.rootfs_dir_))
+                        if os.path.exists(self.rootfs_dir_):
+                            self.log_.l('Directory {} is already exists, removing ...'.format(self.rootfs_dir_))
+                            if os.path.ismount(self.rootfs_dir_):
+                                self.log_.l('Directory is mounted, unmount ...')
+                                subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.cache_dir_])
+                                subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.boot_dir_])
+                                subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.rootfs_dir_])
+                                self.log_.l('Directory unmounted successfully.')
+                            self.log_.l('Removing {} dir'.format(self.rootfs_dir_))
+                            subprocess.check_output(['/usr/bin/sudo', 'rm', '-rf', self.rootfs_dir_])
+                            self.log_.l('Old directory removed successfuly.')
 
-                    if not os.path.exists(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'):
-                        subprocess.check_output(['/usr/bin/sudo', 'mkdir', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'])
-                    
-                    subprocess.check_output(['/usr/bin/sudo', 'install', '-m', '666', '/dev/null', \
-                        self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
+                        os.mkdir(self.rootfs_dir_)
+                        subprocess.check_output(['/usr/bin/sudo', 'tar', '-xvf', self.home_dir_ + '/rootfs.tar.xz', '-C', self.rootfs_dir_])
+                        self.log_.l('Rootfs extracted succesfully to {}.'.format(self.rootfs_dir_))
 
-                    f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
-                    f.write(self.autologin_service_)
+                        if not os.path.exists(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'):
+                            subprocess.check_output(['/usr/bin/sudo', 'mkdir', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d'])
+                        
+                        subprocess.check_output(['/usr/bin/sudo', 'install', '-m', '666', '/dev/null', \
+                            self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
-                    subprocess.check_output(['/usr/bin/sudo', 'chmod', '644', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
+                        f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
+                        f.write(self.autologin_service_)
 
-                    self.create_network_bridge('rosa')
+                        subprocess.check_output(['/usr/bin/sudo', 'chmod', '644', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
-                    self.log_.l('Installing utils to container ...')
+                        self.log_.l('Installing utils to container ...')
 
-                    pkgs = 'NetworkManager systemd-units openssh-server systemd procps-ng timezone dnf sudo usbutils passwd basesystem-minimal rosa-repos-keys rosa-repos git vim vim-enhanced curl'
+                        pkgs = 'NetworkManager systemd-units openssh-server systemd procps-ng timezone dnf sudo usbutils passwd basesystem-minimal rosa-repos-keys rosa-repos git vim vim-enhanced curl'
 
-                    subprocess.check_output(['/usr/bin/sudo', 'dnf', 'install', '-y', '--installroot', self.rootfs_dir_, '--nogpgcheck', \
-                        '--releasever=' + self.release_, '--forcearch=' + self.arch_] + pkgs.split())
+                        subprocess.check_output(['/usr/bin/sudo', 'dnf', 'install', '-y', '--installroot', self.rootfs_dir_, '--nogpgcheck', \
+                            '--releasever=' + self.release_, '--forcearch=' + self.arch_] + pkgs.split())
 
-                    self.log_.l('Utils installed successfully')
+                        self.log_.l('Utils installed successfully')
 
-                    subprocess.check_output(['/usr/bin/sudo', 'useradd', '--prefix', self.rootfs_dir_, 'omv', '-p', 'pabc4KTyGYBtg', '-G', 'wheel', '-m'])
-                    self.log_.l('User omv added successfully.')
+                        subprocess.check_output(['/usr/bin/sudo', 'useradd', '--prefix', self.rootfs_dir_, 'omv', '-p', 'pabc4KTyGYBtg', '-G', 'wheel', '-m'])
+                        self.log_.l('User omv added successfully.')
 
-                    self.log_.l('Configuring sshd settings ...')
+                        self.log_.l('Configuring sshd settings ...')
 
-                    ps = subprocess.Popen(['/usr/bin/echo', ""], stdout=subprocess.PIPE)
-                    output = subprocess.check_output(['/usr/bin/sudo', 'tee', self.rootfs_dir_ + '/etc/ssh/denyusers'], stdin=ps.stdout)
-                    ps.wait()
+                        ps = subprocess.Popen(['/usr/bin/echo', ""], stdout=subprocess.PIPE)
+                        output = subprocess.check_output(['/usr/bin/sudo', 'tee', self.rootfs_dir_ + '/etc/ssh/denyusers'], stdin=ps.stdout)
+                        ps.wait()
 
-                    subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#PermitRootLogin\ prohibit\-password/PermitRootLogin\ yes/g', \
-                        self.rootfs_dir_ + '/etc/ssh/sshd_config'])
-                    subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#\ *PasswordAuthentication/PasswordAuthentication/g', \
-                        self.rootfs_dir_ + '/etc/ssh/ssh_config'])
+                        subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#PermitRootLogin\ prohibit\-password/PermitRootLogin\ yes/g', \
+                            self.rootfs_dir_ + '/etc/ssh/sshd_config'])
+                        subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#\ *PasswordAuthentication/PasswordAuthentication/g', \
+                            self.rootfs_dir_ + '/etc/ssh/ssh_config'])
+                        subprocess.check_output(['sed', '-ie', 's/\#\ *Port\ 22*/Port\ 2222/g',  self.rootfs_dir_ + '/etc/ssh/ssh_config'])
 
-                    self.log_.l('Sshd configured successfully.')
+                        self.log_.l('Ssh access configured successfully.')
 
-                    devnull = open('/dev/null', "w")
-                    p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_, '--network-bridge', 'rosa'], stdout=devnull)
+                        devnull = open('/dev/null', "w")
+                        p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_], stdout=devnull)
 
-                    time.sleep(3)
+                        time.sleep(3)
 
-                    self.log_.l('Systemd-nspawn container created successfully')
-                    return
-                except Exception as e:
-                    err = 'Unable to create rootfs:\n{}.'.format(e)
-                    self.log_.e(err)
-                    self.notifier_.add_error_(err)     
-                    return            
-            
-        err = 'Unable to get rootfs archive form abf:\nNo archive in last buildlist.'
-        self.log_.e(err)
-        self.notifier_.add_error_(err)
+                        self.log_.l('Systemd-nspawn container created successfully')
+                        return
+                    except Exception as e:
+                        err = 'Unable to create rootfs:\n{}.'.format(e)
+                        self.log_.e(err)
+                        self.notifier_.add_error_(err)     
+                        return   
+                
+            self.log_.w('There is no rootfs archive in last build. Try do downoald old versions.')        
+                         

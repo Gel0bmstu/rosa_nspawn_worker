@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
         subprocess.check_output(['/usr/bin/sudo', 'setenforce', '0'])
         
-        nm = NspawnMaker(logger, notifier, release='2019.1', arch=args.arch)
+        nm = NspawnMaker(logger, notifier, release='2019.1', arch=args.arch, rootfs_dir=args.root_dir)
         nm.make_container()
 
         # Work with systemd container
@@ -88,9 +88,9 @@ if __name__ == '__main__':
             sc.check_logs_error_of_service_for_last_session(args.service_name)
 
         # Work with container network
-        pc = SshChecker(logger, notifier, 'rosa')
-        pc.set_bridge_free_ip()
-        pc.check_if_port_is_listening(22, ip = pc.get_bridge_ip())
+        pc = SshChecker(logger = logger, notifier = notifier, use_bridge = False)
+        # pc.set_bridge_free_ip()
+        pc.check_if_port_is_listening(port = 2222)
 
         nm.interrupt_machine()
 

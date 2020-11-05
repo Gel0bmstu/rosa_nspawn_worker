@@ -13,14 +13,24 @@ from modules.notifier import Notifier
 
 class SshChecker:
     log_ = {}
+    use_bridge_ = False
     bridge_name_ = ''
     bridge_ip_ = ''
+
+    ssh_user_ = ''
+    ssh_passwd_ = ''
+
     notifier_ = {}
 
-    def __init__(self, logger, notifier, bridge_name = 'rosa'):
+    def __init__(self, logger, notifier, bridge_name = 'rosa', use_bridge = False):
         self.log_ = logger
         self.bridge_name_ = bridge_name
         self.notifier_ = notifier
+
+        self.use_bridge_ = use_bridge
+
+        self.ssh_user_ = os.environ.get('SSH_USER')
+        self.ssh_passwd_ = os.environ.get('SSH_PASSWD')
 
     def get_bridge_ip(self):
         return self.bridge_ip_
@@ -48,7 +58,7 @@ class SshChecker:
 
             self.log_.l('Router ip address received successfully.')
 
-            return re.sub(r'\.\d*[\/\d*]*$', '0/24', router_address)
+            return re.sub(r'\.\d*[\/\d*]*$', '.0/24', router_address)
 
         except Exception as e:
             err = 'Unable to get local subnet addres:\n{}'.format(e)
@@ -90,7 +100,7 @@ class SshChecker:
             except:
                 self.log_.l("Interface doesn't have an ip address.")
         except Exception as e:
-            err = 'Unable tto get ip of {}:\n{}'.format(interface, e)
+            err = 'Unable to get ip of {}:\n{}'.format(interface, e)
             self.log_.e(err)
             self.notifier_.add_error_(err)
 
@@ -118,8 +128,10 @@ class SshChecker:
             self.notifier_.add_error_(err)
 
     def check_if_port_is_listening(self, port = 22, ip = None):
-        if ip == None and self.bridge_ip_:
+        if ip == None and self.bridge_ip_ and self.use_bridge_:
             ip = self.bridge_ip_
+        else:
+            ip = 'localhost'
 
         self.log_.l('Checking {}:{} port ...'.format(ip, port))
 
@@ -132,8 +144,9 @@ class SshChecker:
             self.log_.l('Port {} is open.'.format(port))
             return True
         except Exception as e:
-            self.log_.e('Port {} is closed! Terminating.'.format(port))
-            self.log_.d('Error is: {}'.format(e))
+            err = 'Port {} is closed!\n{}'.format(port, e)
+            self.log_.e(err)
+            self.notifier_.add_error_(err)
             return False
         finally:
             s.close()
@@ -147,15 +160,16 @@ class SshChecker:
 
             if password_auth_check: 
                 if user == None:
-                    user = os.environ['USER']
+                    self.ssh_user_ = user
                 
                 if password == None:
-                    password = os.environ['PASSWD']
+                    self.ssh_passwd_ = password
 
-                    client.connect(hostname=host, username=user, password=password)
+
+                    client.connect(hostname=host, username=self.ssh_user_, password=self.ssh_passwd_)
             else:
                 path_to_ssh_public_key = u'/home/{}/.ssh/id_rsa.pub'.format(os.environ['USER'])
-                client.connect(hostname=host, username=user, key_filename=path_to_ssh_public_key)
+                client.connect(hostname=host, username=os.environ['USER'], key_filename=path_to_ssh_public_key)
 
             self.log_.l('Сonnection with {} established successfully.'.format(host))
         except Exception as e:
