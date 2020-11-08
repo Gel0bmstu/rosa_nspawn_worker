@@ -90,15 +90,15 @@ if __name__ == '__main__':
         # Work with container network
         pc = SshChecker(logger = logger, notifier = notifier, use_bridge = False)
         # pc.set_bridge_free_ip()
-        pc.check_if_port_is_listening(port = 2222)
+        pc.check_if_port_is_listening(port = 22)
 
         nm.interrupt_machine()
 
         subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
 
         if notifier.get_error_stack_size_() > 0:
-            # notifier.alert()
+            notifier.alert()
             exit(-1)
     except Exception as e:
-        # notifier.alert()
+        notifier.alert()
         exit(-1)

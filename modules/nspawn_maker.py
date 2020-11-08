@@ -142,7 +142,6 @@ class NspawnMaker:
                                 subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.boot_dir_])
                                 subprocess.check_output(['/usr/bin/sudo', '/bin/umount', self.rootfs_dir_])
                                 self.log_.l('Directory unmounted successfully.')
-                            self.log_.l('Removing {} dir'.format(self.rootfs_dir_))
                             subprocess.check_output(['/usr/bin/sudo', 'rm', '-rf', self.rootfs_dir_])
                             self.log_.l('Old directory removed successfuly.')
 
@@ -156,8 +155,8 @@ class NspawnMaker:
                         subprocess.check_output(['/usr/bin/sudo', 'install', '-m', '666', '/dev/null', \
                             self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
-                        f = open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+')
-                        f.write(self.autologin_service_)
+                        with open(self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf', 'w+') as f:
+                            f.write(self.autologin_service_)
 
                         subprocess.check_output(['/usr/bin/sudo', 'chmod', '644', self.rootfs_dir_ + '/etc/systemd/system/console-getty.service.d/override.conf'])
 
@@ -183,10 +182,15 @@ class NspawnMaker:
                             self.rootfs_dir_ + '/etc/ssh/sshd_config'])
                         subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#\ *PasswordAuthentication/PasswordAuthentication/g', \
                             self.rootfs_dir_ + '/etc/ssh/ssh_config'])
-                        subprocess.check_output(['sed', '-ie', 's/\#\ *Port\ 22*/Port\ 2222/g',  self.rootfs_dir_ + '/etc/ssh/ssh_config'])
+                        subprocess.check_output(['/usr/bin/sudo', 'sed', '-ie', 's/\#\ *Port\ 22*/Port\ 2222/g',  self.rootfs_dir_ + '/etc/ssh/ssh_config'])
+                        
+                        # with open(self.rootfs_dir_ + '/etc/systemd/system/sshd.socket', 'w+') as f:
+                        #     f.write('[Unit]\nDescription=SSH Socket for Per-Connection Servers\n\n[Socket]\nListenStream=2222\nAccept=yes\n\n[Install]\nWantedBy=sockets.target')
 
-                        self.log_.l('Ssh access configured successfully.')
+                        # with open(self.rootfs_dir_ + '/etc/systemd/system/sshd@.service', 'w+') as f:
+                        #     f.write('[Unit]\nDescription=SSH Per-Connection Server for %I\n\n[Service]\nExecStart=-/usr/sbin/sshd -i\nStandardInput=socket\n\n[Install]\nWantedBy=multi-user.target\nAlias=sshd.service')
 
+                        # The systemd sshd service will be restarted in SystemdChecker constructor
                         devnull = open('/dev/null', "w")
                         p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_], stdout=devnull)
 
@@ -200,5 +204,5 @@ class NspawnMaker:
                         self.notifier_.add_error_(err)     
                         return   
                 
-            self.log_.w('There is no rootfs archive in last build. Try do downoald old versions.')        
+            self.log_.w('There is no rootfs archive in {} build. Try do downoald old versions.'.format(last_build_list_id))        
                          

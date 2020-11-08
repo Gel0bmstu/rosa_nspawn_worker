@@ -65,6 +65,8 @@ class SystemdChecker:
             # Some sshd fixes
             self.execute_command_in_container_shell('/usr/bin/passwd -d root')
             self.execute_command_in_container_shell('/usr/bin/systemctl restart sshd')
+            self.log_.l('Ssh access configured successfully.')
+
         except Exception as e:
             err = 'Unable to create SystemdChecker class: {}\n'.format(e)
             self.log_.e(err)
