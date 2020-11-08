@@ -17,7 +17,7 @@ class NspawnMaker:
     notifier_ = {}
     # rootfs_dir_ = self.home_dir_ + '/uptade_nspawn_container'
     boot_dir_ =  rootfs_dir_ + '/boot'
-    home_dir_ = ''
+    home_dir_ = '/home/oleg'
     cache_dir_ =  rootfs_dir_ + '/var/cache/dnf'
     autologin_service_ = u'[Service] \n \
         ExecStart= \n \
@@ -30,12 +30,13 @@ class NspawnMaker:
         self.arch_ = arch
         self.machine_name_ = machine_name
 
-        if rootfs_dir != '':
+        if rootfs_dir is not None:
             self.log_.l('Changing contaner root directory for {}'.format(rootfs_dir))
             self.rootfs_dir_ = rootfs_dir
         else:
             self.rootfs_dir_ = self.home_dir_ + '/rosa{}_{}'.format(self.release_, self.arch_)
-            self.log_.l('Root directory is {}'.format(self.rootfs_dir_))
+        
+        self.log_.l('Root directory is {}'.format(self.rootfs_dir_))
 
         self.boot_dir =  self.rootfs_dir_ + '/boot'
         self.cache_dir = self.rootfs_dir_ + '/var/cache/dnf'   
@@ -105,10 +106,10 @@ class NspawnMaker:
             auth=requests.auth.HTTPBasicAuth(self.abf_token_, ''))
         json = response.json()
 
-        for i in range(len(json['product_build_lists'])):
-            last_build_list_id = json['product_build_lists'][i]['id']
+        for build in json['product_build_lists']:
+            build_id = build['id']
 
-            response = requests.get('https://abf.io/api/v1/product_build_lists/{}.json'.format(last_build_list_id), \
+            response = requests.get('https://abf.io/api/v1/product_build_lists/{}.json'.format(build_id), \
                 auth=requests.auth.HTTPBasicAuth(self.abf_token_, ''))
             json = response.json()
             build_results = json['product_build_list']['results']
@@ -120,6 +121,9 @@ class NspawnMaker:
                             name=result['file_name'], \
                             date=json['product_build_list']['notified_at'], \
                             download=result['url'])
+
+                        self.log_.l('ABF build id:   {}'.format(build_id))
+                        self.log_.l('ABF build date: {}'.format(json['product_build_list']['notified_at']))
 
                         self.log_.l('Downloading rootfs archive ...')
                         r = requests.get(result['url'])
@@ -162,7 +166,7 @@ class NspawnMaker:
 
                         self.log_.l('Installing utils to container ...')
 
-                        pkgs = 'NetworkManager systemd-units openssh-server systemd procps-ng timezone dnf sudo usbutils passwd basesystem-minimal rosa-repos-keys rosa-repos git vim vim-enhanced curl'
+                        pkgs = 'NetworkManager systemd-units openssh-server systemd procps-ng timezone dnf sudo passwd basesystem-minimal rosa-repos-keys rosa-repos'
 
                         subprocess.check_output(['/usr/bin/sudo', 'dnf', 'install', '-y', '--installroot', self.rootfs_dir_, '--nogpgcheck', \
                             '--releasever=' + self.release_, '--forcearch=' + self.arch_] + pkgs.split())
@@ -182,17 +186,11 @@ class NspawnMaker:
                             self.rootfs_dir_ + '/etc/ssh/sshd_config'])
                         subprocess.check_output(['/usr/bin/sudo', 'sed', '-i', 's/\#\ *PasswordAuthentication/PasswordAuthentication/g', \
                             self.rootfs_dir_ + '/etc/ssh/ssh_config'])
-                        subprocess.check_output(['/usr/bin/sudo', 'sed', '-ie', 's/\#\ *Port\ 22*/Port\ 2222/g',  self.rootfs_dir_ + '/etc/ssh/ssh_config'])
-                        
-                        # with open(self.rootfs_dir_ + '/etc/systemd/system/sshd.socket', 'w+') as f:
-                        #     f.write('[Unit]\nDescription=SSH Socket for Per-Connection Servers\n\n[Socket]\nListenStream=2222\nAccept=yes\n\n[Install]\nWantedBy=sockets.target')
-
-                        # with open(self.rootfs_dir_ + '/etc/systemd/system/sshd@.service', 'w+') as f:
-                        #     f.write('[Unit]\nDescription=SSH Per-Connection Server for %I\n\n[Service]\nExecStart=-/usr/sbin/sshd -i\nStandardInput=socket\n\n[Install]\nWantedBy=multi-user.target\nAlias=sshd.service')
+                        # subprocess.check_output(['/usr/bin/sudo', 'sed', '-ie', 's/\#\ *Port\ 22*/Port\ 2222/g',  self.rootfs_dir_ + '/etc/ssh/ssh_config'])
 
                         # The systemd sshd service will be restarted in SystemdChecker constructor
                         devnull = open('/dev/null', "w")
-                        p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_], stdout=devnull)
+                        p = subprocess.Popen(['/usr/bin/sudo', 'systemd-nspawn', '-bD', self.rootfs_dir_, '-M', self.machine_name_, '--network-bridge', 'virbr0'], stdout=devnull)
 
                         time.sleep(3)
 
@@ -204,5 +202,5 @@ class NspawnMaker:
                         self.notifier_.add_error_(err)     
                         return   
                 
-            self.log_.w('There is no rootfs archive in {} build. Try do downoald old versions.'.format(last_build_list_id))        
+            self.log_.w('There is no rootfs archive in {} build. Try do downoald old versions.'.format(build_id))        
                          

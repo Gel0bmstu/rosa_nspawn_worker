@@ -23,7 +23,7 @@ def parse_script_arguments():
                         help='filter output by priority ranges: 0 - no logs, 1 - errors only,\
                             2 - errors and warnings, 3 - errors, warnings and info, 4 - precursor and debug.')
     parser.add_argument('-m', '--machine', action='store', default='', dest='machine_name', help='set systemd machine name')
-    parser.add_argument('-r', '--root-dir', action='store', default='', dest='root_dir', help='set systemd container root directory')
+    parser.add_argument('-r', '--root-dir', action='store', default=None, dest='root_dir', help='set systemd container root directory')
     
     # Control params
 
@@ -92,9 +92,9 @@ if __name__ == '__main__':
         # pc.set_bridge_free_ip()
         pc.check_if_port_is_listening(port = 22)
 
-        nm.interrupt_machine()
+        # nm.interrupt_machine()
 
-        subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
+        # subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
 
         if notifier.get_error_stack_size_() > 0:
             notifier.alert()
