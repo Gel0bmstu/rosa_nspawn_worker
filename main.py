@@ -92,7 +92,7 @@ if __name__ == '__main__':
         # pc.set_bridge_free_ip()
         pc.check_if_port_is_listening(port = 22)
 
-        # nm.interrupt_machine()
+        nm.interrupt_machine()
 
         # subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
 

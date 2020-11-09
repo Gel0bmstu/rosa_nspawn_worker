@@ -37,6 +37,7 @@ class NspawnMaker:
             self.rootfs_dir_ = self.home_dir_ + '/rosa{}_{}'.format(self.release_, self.arch_)
         
         self.log_.l('Root directory is {}'.format(self.rootfs_dir_))
+        self.log_.l('Machine name is {}'.format(self.machine_name_))
 
         self.boot_dir =  self.rootfs_dir_ + '/boot'
         self.cache_dir = self.rootfs_dir_ + '/var/cache/dnf'   
@@ -75,9 +76,10 @@ class NspawnMaker:
         machines = output.split('\n')
 
         self.log_.d('Machines list:')
-        for machine_name in machines:
+        for machine_props in machines:
+            machine_name = machine_props.split()[0]
             self.log_.d('Machine name: {}'.format(machine_name))
-            if machine_name != "" and machine_name.split()[0] == machine:
+            if machine_name != "" and machine_name == machine:
                 self.log_.l('Machine {} exists'.format(machine))
                 return True
         
@@ -93,6 +95,10 @@ class NspawnMaker:
         subprocess.check_output(['/usr/bin/sudo', 'systemctl', 'reset-failed'])
 
     def make_container(self):
+        
+        if self.check_machine_exist():
+            self.interrupt_machine()
+        
         product_id = 0
         if self.arch_ == 'x86_64':
             product_id = 284
