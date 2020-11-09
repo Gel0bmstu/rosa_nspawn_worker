@@ -95,7 +95,7 @@ class Notifier:
                         build_log_link=link)
 
         self.alert_tg(text)
-        # self.alert_mail(text)
+        self.alert_mail(text)
 
     def alert_tg(self, text):
         self.tg_.alert(text)

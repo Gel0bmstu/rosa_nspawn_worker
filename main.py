@@ -94,6 +94,8 @@ if __name__ == '__main__':
 
         nm.interrupt_machine()
 
+        notifier.add_error_('test')
+
         # subprocess.check_output(['/usr/bin/sudo', 'setenforce', '1'])
 
         if notifier.get_error_stack_size_() > 0:
