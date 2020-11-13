@@ -1,4 +1,6 @@
 dbus
-systemd-udevd
 iptables
 sshd
+NetworkManager
+nscd
+systemd-udevd
