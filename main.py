@@ -35,6 +35,7 @@ def parse_script_arguments():
 
     # Cehck status of service
     parser.add_argument('-s', '--service', action='store', default=None, dest='service_name', help='check state of setted service in container')
+    parser.add_argument('--service-file', action='store', default=None, dest='service_file', help='check state of services in specified file')
 
 
     return parser.parse_args()
@@ -82,6 +83,13 @@ if __name__ == '__main__':
         if args.check_state:
             sc.check_systemd_state()
             sc.check_systemd_error_logs()
+        
+        if args.service_file != None:
+            with open(args.service_file, 'r') as f:
+                for service in f:
+                    if service is not None and service != '':
+                        sc.check_current_status_of_service(service)
+                        sc.check_logs_error_of_service_for_last_session(service)                        
         
         if args.service_name != None:
             sc.check_current_status_of_service(args.service_name)
