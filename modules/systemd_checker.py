@@ -179,8 +179,8 @@ class SystemdChecker:
                 unit = err.decode('utf-8').split()[-1].split('.')[0]
                 self.log_.d('Command unit is: {}'.format(unit))
 
-                output = subprocess.check_output(self.commands_['get_output_by_unit'] + [unit])
-                output = output.decode('utf-8')
+                completed_process = subprocess.run(self.commands_['get_output_by_unit'] + [unit])
+                output = completed_process.stdout.decode('utf-8')
 
                 self.log_.d('Command output before split:\n{}'.format(output))
 
@@ -212,8 +212,8 @@ class SystemdChecker:
 
                 return cmd_out
 
-        except Exception as e:
-            err = 'Unable to execute command in container: \n{}'.format(e)
+        except subprocess.CalledProcessError as e:
+            err = 'Unable to execute command in container: \n{}'.format(e.output)
             self.log_.e(err)
             self.notifier_.add_error_(err)
 
@@ -332,15 +332,15 @@ class SystemdChecker:
         return service_status
 
     def check_current_status_of_service(self, service):
-        self.log_.l('Checking {}.service status ...'.format(service))
+        self.log_.l('Checking \033[1m{}.service\033[0m status ...'.format(service))
 
         status = self.get_current_status_of_service(service)
         if status['Active'].split()[0] != 'active':
-            err = 'Service {} is not active! Terminating.'.format(service)
+            err = 'Service \033[1m{}\033[0m is not active! Terminating.'.format(service)
             self.log_.e(err)
             self.notifier_.add_error_(err)
         
-        self.log_.l('Service {} is active, all is ok!'.format(service))
+        self.log_.l('Service \033[1m{}\033[0m is active, all is ok!'.format(service))
 
     def check_systemd_state(self):
         try:

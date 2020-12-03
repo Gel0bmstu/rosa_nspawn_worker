@@ -4,6 +4,8 @@
 import argparse
 import json
 import subprocess
+import time
+import re
 
 from modules.systemd_checker import SystemdChecker
 from modules.logger import Logger
@@ -87,9 +89,12 @@ if __name__ == '__main__':
         if args.service_file != None:
             with open(args.service_file, 'r') as f:
                 for service in f:
+                    if re.match('^#', service):
+                        continue
+                    
                     if service is not None and service != '':
-                        sc.check_current_status_of_service(service)
-                        sc.check_logs_error_of_service_for_last_session(service)                        
+                        sc.check_current_status_of_service(service.strip())
+                        sc.check_logs_error_of_service_for_last_session(service.strip())
         
         if args.service_name != None:
             sc.check_current_status_of_service(args.service_name)
