@@ -94,8 +94,8 @@ class Notifier:
                         rootfs_download_link=self.rootfs_download_link_,
                         build_log_link=link)
 
-        # self.alert_tg(text)
-        # self.alert_mail(text)
+        self.alert_tg(text)
+        self.alert_mail(text)
 
     def alert_tg(self, text):
         self.tg_.alert(text)
